@@ -251,20 +251,40 @@ class MailWizzNewsletterBox extends WP_Widget
         $freshFields    = $response['data']['records'];
         $selectedFields = !empty($instance['selected_fields']) ? $instance['selected_fields'] : array();
         $rowTemplate    = '<div class="form-group"><label>[LABEL] [REQUIRED_SPAN]</label><input type="text" class="form-control" name="[TAG]" placeholder="[HELP_TEXT]" value="" [REQUIRED]/></div>';
+        $dropdownRowTemplate = '<div class="form-group"><label>[LABEL] [REQUIRED_SPAN]</label>
+								<select type="text" class="form-control" name="[TAG]" placeholder="[HELP_TEXT]" [REQUIRED]>
+								
+								</select>
+								</div>';
         
         $output = array();
         foreach ($freshFields as $field) {
-            $searchReplace = array(
-                '[LABEL]'           => $field['label'],
-                '[REQUIRED]'        => $field['required'] != 'yes' ? '' : 'required',
-                '[REQUIRED_SPAN]'   => $field['required'] != 'yes' ? '' : '<span class="required">*</span>',
-                '[TAG]'             => $field['tag'],
-                '[HELP_TEXT]'       => $field['help_text'],
-                
-            );
-            if (in_array($field['tag'], $selectedFields) || $field['required'] == 'yes') {
-                $output[] = str_replace(array_keys($searchReplace), array_values($searchReplace), $rowTemplate);
-            }
+			if($field['type']['identifier'] != 'dropdown'){
+				$searchReplace = array(
+					'[LABEL]'           => $field['label'],
+					'[REQUIRED]'        => $field['required'] != 'yes' ? '' : 'required',
+					'[REQUIRED_SPAN]'   => $field['required'] != 'yes' ? '' : '<span class="required">*</span>',
+					'[TAG]'             => $field['tag'],
+					'[HELP_TEXT]'       => $field['help_text'],
+					
+				);
+				if (in_array($field['tag'], $selectedFields) || $field['required'] == 'yes') {
+					$output[] = str_replace(array_keys($searchReplace), array_values($searchReplace), $rowTemplate);
+				}
+			}else{
+				$required = $field['required'] != 'yes' ? '' : 'required';
+				$required_span = $field['required'] != 'yes' ? '' : '<span class="required">*</span>';
+				
+				$ddOutput = '<div class="form-group"><label>'.$field['label'].' '.$required_span.'</label>';
+				$ddOutput .= '<select class="form-control" name="'.$field['tag'].'" placeholder="'.$field['help_text'].'" '.$required.'>';
+				foreach($field['options'] as $key => $option){
+					$ddOutput .= '<option value="'.$key.'">'.$option.'</option>';
+				}
+				$ddOutput .= '</select>';
+				$ddOutput .= '</div>';
+				
+				$output[] = $ddOutput;
+			}
         }
         
         $out = '<form method="post" data-uid="'.$instance['uid'].'">' . "\n\n";
